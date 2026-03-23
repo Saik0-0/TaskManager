@@ -6,6 +6,7 @@ import (
 	"github.com/Saik0-0/TaskManager/models"
 	"github.com/Saik0-0/TaskManager/storage"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -52,6 +53,27 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			response = server.Store.GetDoneTasks(d)
+		}
+
+		sortingType := query.Get("sort")
+		switch sortingType {
+		case "title", "-title":
+			order := strings.HasPrefix(sortingType, "-")
+			sort.Slice(response.Tasks, func(i, j int) bool {
+				if !order {
+					return response.Tasks[i].Title < response.Tasks[j].Title
+				}
+				return response.Tasks[i].Title > response.Tasks[j].Title
+			})
+
+		case "completed", "-completed":
+			order := strings.HasPrefix(sortingType, "-")
+			sort.Slice(response.Tasks, func(i, j int) bool {
+				if !order {
+					return fromBoolToInt(response.Tasks[i].Completed) > fromBoolToInt(response.Tasks[j].Completed)
+				}
+				return fromBoolToInt(response.Tasks[i].Completed) < fromBoolToInt(response.Tasks[j].Completed)
+			})
 		}
 
 		offset := 0
@@ -168,4 +190,12 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 
 	}
+}
+
+func fromBoolToInt(flag bool) int {
+	if flag {
+		return 1
+	}
+
+	return 0
 }
