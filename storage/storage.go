@@ -12,13 +12,13 @@ var (
 )
 
 type TaskStore struct {
-	tasks map[int]models.Task
+	Tasks map[int]models.Task
 	mtx   sync.RWMutex
 }
 
 type Response struct {
 	Total int           `json:"total"`
-	Tasks []models.Task `json:"tasks"`
+	Tasks []models.Task `json:"Tasks"`
 }
 
 func (ts *TaskStore) AddTask(newTask models.NewTask) models.Task {
@@ -32,7 +32,7 @@ func (ts *TaskStore) AddTask(newTask models.NewTask) models.Task {
 	}
 
 	ts.mtx.Lock()
-	ts.tasks[int(id)] = task
+	ts.Tasks[int(id)] = task
 	ts.mtx.Unlock()
 
 	return task
@@ -41,13 +41,13 @@ func (ts *TaskStore) AddTask(newTask models.NewTask) models.Task {
 func (ts *TaskStore) DeleteTask(id int) bool {
 	ts.mtx.Lock()
 
-	_, exist := ts.tasks[id]
+	_, exist := ts.Tasks[id]
 	if !exist {
 		ts.mtx.Unlock()
 		return false
 	}
 
-	delete(ts.tasks, id)
+	delete(ts.Tasks, id)
 
 	ts.mtx.Unlock()
 
@@ -57,7 +57,7 @@ func (ts *TaskStore) DeleteTask(id int) bool {
 func (ts *TaskStore) ChangeTask(id int, newTask models.NewTask) (models.Task, bool) {
 	ts.mtx.Lock()
 
-	_, exist := ts.tasks[id]
+	_, exist := ts.Tasks[id]
 	if !exist {
 		ts.mtx.Unlock()
 		return models.Task{}, false
@@ -70,7 +70,7 @@ func (ts *TaskStore) ChangeTask(id int, newTask models.NewTask) (models.Task, bo
 		Completed: newTask.Completed,
 	}
 
-	ts.tasks[id] = task
+	ts.Tasks[id] = task
 
 	ts.mtx.Unlock()
 
@@ -81,11 +81,11 @@ func (ts *TaskStore) GetAllTasks() Response {
 	ts.mtx.RLock()
 
 	response := Response{
-		Total: len(ts.tasks),
-		Tasks: make([]models.Task, 0, len(ts.tasks)),
+		Total: len(ts.Tasks),
+		Tasks: make([]models.Task, 0, len(ts.Tasks)),
 	}
 
-	for _, task := range ts.tasks {
+	for _, task := range ts.Tasks {
 		response.Tasks = append(response.Tasks, task)
 	}
 
@@ -98,11 +98,11 @@ func (ts *TaskStore) GetAllTasksFiltered(filter string) Response {
 	ts.mtx.RLock()
 
 	response := Response{
-		Total: len(ts.tasks),
-		Tasks: make([]models.Task, 0, len(ts.tasks)),
+		Total: len(ts.Tasks),
+		Tasks: make([]models.Task, 0, len(ts.Tasks)),
 	}
 
-	for _, task := range ts.tasks {
+	for _, task := range ts.Tasks {
 		if strings.Contains(task.Title, filter) {
 			response.Tasks = append(response.Tasks, task)
 		}
@@ -116,7 +116,7 @@ func (ts *TaskStore) GetAllTasksFiltered(filter string) Response {
 func (ts *TaskStore) GetTask(id int) (models.Task, bool) {
 	ts.mtx.RLock()
 
-	responseTask, exist := ts.tasks[id]
+	responseTask, exist := ts.Tasks[id]
 	if !exist {
 		ts.mtx.RUnlock()
 		return models.Task{}, false
