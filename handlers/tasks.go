@@ -111,6 +111,35 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+	case http.MethodPut:
+		defer r.Body.Close()
+
+		idString := strings.TrimPrefix(r.URL.Path, "/tasks/")
+		id, idErr := strconv.Atoi(idString)
+		if idErr != nil {
+			http.Error(w, "Invalid id: must be integer", http.StatusBadRequest)
+			return
+		}
+
+		var newTask models.NewTask
+		if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+
+		responseTask, exist := server.Store.ChangeTask(id, newTask)
+		if !exist {
+			http.Error(w, "Task not found", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(responseTask); err != nil {
+			fmt.Println("Encoding error: ", err)
+			return
+		}
+
 	default:
 
 	}
