@@ -18,7 +18,7 @@ type TaskStore struct {
 
 type Response struct {
 	Total int           `json:"total"`
-	Tasks []models.Task `json:"Tasks"`
+	Tasks []models.Task `json:"tasks"`
 }
 
 func (ts *TaskStore) AddTask(newTask models.NewTask) models.Task {
@@ -98,13 +98,14 @@ func (ts *TaskStore) GetAllTasksFiltered(filter string) Response {
 	ts.mtx.RLock()
 
 	response := Response{
-		Total: len(ts.Tasks),
+		Total: 0,
 		Tasks: make([]models.Task, 0, len(ts.Tasks)),
 	}
 
 	for _, task := range ts.Tasks {
 		if strings.Contains(task.Title, filter) {
 			response.Tasks = append(response.Tasks, task)
+			response.Total++
 		}
 	}
 
