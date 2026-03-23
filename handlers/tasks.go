@@ -140,6 +140,21 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+	case http.MethodDelete:
+		idString := strings.TrimPrefix(r.URL.Path, "/tasks/")
+		id, idErr := strconv.Atoi(idString)
+		if idErr != nil {
+			http.Error(w, "Invalid id: must be integer", http.StatusBadRequest)
+			return
+		}
+
+		if try := server.Store.DeleteTask(id); !try {
+			http.Error(w, "Task not found", http.StatusNotFound)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+
 	default:
 
 	}
