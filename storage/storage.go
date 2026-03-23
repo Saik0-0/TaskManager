@@ -127,3 +127,27 @@ func (ts *TaskStore) GetTask(id int) (models.Task, bool) {
 
 	return responseTask, true
 }
+
+func (ts *TaskStore) GetDoneTasks(filter bool) Response {
+	ts.mtx.RLock()
+
+	response := Response{
+		Total: 0,
+		Tasks: make([]models.Task, 0, len(ts.Tasks)),
+	}
+
+	for _, task := range ts.Tasks {
+		if filter && task.Completed {
+			response.Tasks = append(response.Tasks, task)
+			response.Total++
+		}
+		if !filter && !task.Completed {
+			response.Tasks = append(response.Tasks, task)
+			response.Total++
+		}
+	}
+
+	ts.mtx.RUnlock()
+
+	return response
+}
