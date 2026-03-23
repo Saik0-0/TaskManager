@@ -7,6 +7,7 @@ import (
 	"github.com/Saik0-0/TaskManager/storage"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type Server struct {
@@ -80,9 +81,37 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Encoding error: ", err)
 			return
 		}
-		
+
 	default:
 		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
 		return
+	}
+}
+
+func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		idString := strings.TrimPrefix(r.URL.Path, "/tasks/")
+		id, idErr := strconv.Atoi(idString)
+		if idErr != nil {
+			http.Error(w, "Invalid id: must be integer", http.StatusBadRequest)
+			return
+		}
+
+		responseTask, exist := server.Store.GetTask(id)
+		if !exist {
+			http.Error(w, "Task not found", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(responseTask); err != nil {
+			fmt.Println("Encoding error: ", err)
+			return
+		}
+
+	default:
+
 	}
 }
