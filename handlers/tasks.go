@@ -44,6 +44,16 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 			response = server.Store.GetAllTasks()
 		}
 
+		doneFilterString := query.Get("done")
+		if doneFilterString != "" {
+			d, err := strconv.ParseBool(doneFilterString)
+			if err != nil {
+				http.Error(w, "Invalid done filter", http.StatusBadRequest)
+				return
+			}
+			response = server.Store.GetDoneTasks(d)
+		}
+
 		offset := 0
 		limit := response.Total
 
