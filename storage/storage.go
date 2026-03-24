@@ -7,13 +7,10 @@ import (
 	"sync/atomic"
 )
 
-var (
-	nextID atomic.Int64
-)
-
 type TaskStore struct {
-	Tasks map[int]models.Task
-	mtx   sync.RWMutex
+	Tasks  map[int]models.Task
+	NextID atomic.Int64
+	mtx    sync.RWMutex
 }
 
 type Response struct {
@@ -22,7 +19,7 @@ type Response struct {
 }
 
 func (ts *TaskStore) AddTask(newTask models.NewTask) models.Task {
-	id := nextID.Add(1)
+	id := ts.NextID.Add(1)
 
 	task := models.Task{
 		ID:        int(id),
