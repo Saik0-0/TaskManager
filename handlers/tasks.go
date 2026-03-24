@@ -20,6 +20,10 @@ type Response struct {
 	Tasks []models.Task `json:"tasks"`
 }
 
+type ErrorResponse struct {
+	Message string `json:"message"`
+}
+
 func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
@@ -27,13 +31,23 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 
 		var newTask models.NewTask
 		if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
-			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid JSON"}); err != nil {
+				fmt.Println("Encoding error", err)
+				return
+			}
 			return
 		}
 
 		responseTask, addErr := server.Store.AddTask(newTask)
 		if addErr != nil {
-			http.Error(w, "Invalid JSON: title can't be empty", http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid JSON: title can't be empty"}); err != nil {
+				fmt.Println("Encoding error", err)
+				return
+			}
 			return
 		}
 
@@ -54,7 +68,12 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 		var err error
 		response.Tasks, err = server.Store.GetAllTasks(title, text, complete)
 		if err != nil {
-			http.Error(w, "Invalid Query params", http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid Query params"}); err != nil {
+				fmt.Println("Encoding error", err)
+				return
+			}
 			return
 		}
 		response.Total = len(response.Tasks)
@@ -78,6 +97,15 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				return fromBoolToInt(response.Tasks[i].Completed) < fromBoolToInt(response.Tasks[j].Completed)
 			})
+
+		case "time", "-time":
+			order := strings.HasPrefix(sortingType, "-")
+			sort.Slice(response.Tasks, func(i, j int) bool {
+				if !order {
+					return response.Tasks[i].Time.Before(response.Tasks[j].Time)
+				}
+				return response.Tasks[i].Time.After(response.Tasks[j].Time)
+			})
 		}
 
 		offset := 0
@@ -87,7 +115,12 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 		if offsetString != "" {
 			o, err := strconv.Atoi(offsetString)
 			if err != nil {
-				http.Error(w, "Invalid offset: must be integer", http.StatusBadRequest)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid offset: must be integer"}); err != nil {
+					fmt.Println("Encoding error", err)
+					return
+				}
 				return
 			}
 			offset = o
@@ -97,7 +130,12 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 		if limitString != "" {
 			l, err := strconv.Atoi(limitString)
 			if err != nil {
-				http.Error(w, "Invalid limit: must be integer", http.StatusBadRequest)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid limit: must be integer"}); err != nil {
+					fmt.Println("Encoding error", err)
+					return
+				}
 				return
 			}
 			limit = l
@@ -121,7 +159,12 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	default:
-		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid method"}); err != nil {
+			fmt.Println("Encoding error", err)
+			return
+		}
 		return
 	}
 }
@@ -131,13 +174,23 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		id, idErr := parseID(r)
 		if idErr != nil {
-			http.Error(w, "Invalid id: must be integer", http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid id: must be integer"}); err != nil {
+				fmt.Println("Encoding error", err)
+				return
+			}
 			return
 		}
 
 		responseTask, exist := server.Store.GetTask(id)
 		if !exist {
-			http.Error(w, "Task not found", http.StatusNotFound)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Task not found"}); err != nil {
+				fmt.Println("Encoding error", err)
+				return
+			}
 			return
 		}
 
@@ -153,19 +206,34 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 
 		id, idErr := parseID(r)
 		if idErr != nil {
-			http.Error(w, "Invalid id: must be integer", http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid id: must be integer"}); err != nil {
+				fmt.Println("Encoding error", err)
+				return
+			}
 			return
 		}
 
 		var newTask models.NewTask
 		if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
-			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid JSON"}); err != nil {
+				fmt.Println("Encoding error", err)
+				return
+			}
 			return
 		}
 
 		responseTask, changingErr := server.Store.ChangeTask(id, newTask)
 		if changingErr != nil {
-			http.Error(w, "Task not found", http.StatusNotFound)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Task not found"}); err != nil {
+				fmt.Println("Encoding error", err)
+				return
+			}
 			return
 		}
 
@@ -181,19 +249,34 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 
 		id, idErr := parseID(r)
 		if idErr != nil {
-			http.Error(w, "Invalid id: must be integer", http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid id: must be integer"}); err != nil {
+				fmt.Println("Encoding error", err)
+				return
+			}
 			return
 		}
 
 		var patchTask models.PatchTask
 		if err := json.NewDecoder(r.Body).Decode(&patchTask); err != nil {
-			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid JSON"}); err != nil {
+				fmt.Println("Encoding error", err)
+				return
+			}
 			return
 		}
 
 		responseTask, changingErr := server.Store.PartialChangeTask(id, patchTask)
 		if changingErr != nil {
-			http.Error(w, "Task not found", http.StatusNotFound)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Task not found"}); err != nil {
+				fmt.Println("Encoding error", err)
+				return
+			}
 			return
 		}
 
@@ -207,12 +290,22 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		id, idErr := parseID(r)
 		if idErr != nil {
-			http.Error(w, "Invalid id: must be integer", http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Invalid id: must be integer"}); err != nil {
+				fmt.Println("Encoding error", err)
+				return
+			}
 			return
 		}
 
 		if try := server.Store.DeleteTask(id); !try {
-			http.Error(w, "Task not found", http.StatusNotFound)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusNotFound)
+			if err := json.NewEncoder(w).Encode(ErrorResponse{Message: "Task not found"}); err != nil {
+				fmt.Println("Encoding error", err)
+				return
+			}
 			return
 		}
 
