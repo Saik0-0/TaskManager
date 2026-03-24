@@ -42,8 +42,7 @@ func (ts *TaskStore) AddTask(newTask models.NewTask) (models.Task, error) {
 func (ts *TaskStore) DeleteTask(id int) bool {
 	ts.mtx.Lock()
 
-	_, exist := ts.Tasks[id]
-	if !exist {
+	if _, exist := ts.Tasks[id]; !exist {
 		ts.mtx.Unlock()
 		return false
 	}
@@ -121,19 +120,21 @@ func (ts *TaskStore) GetAllTasks(titleFilter string, textFilter string, complete
 
 	response := make([]models.Task, 0, len(ts.Tasks))
 
+	flag := true
+	var err error
+	if completeFilter != "" {
+		flag, err = strconv.ParseBool(completeFilter)
+		if err != nil {
+			ts.mtx.RUnlock()
+			return response, err
+		}
+	}
+
 	for _, task := range ts.Tasks {
 		if titleFilter == "" || strings.Contains(task.Title, titleFilter) {
 			if textFilter == "" || strings.Contains(task.Text, textFilter) {
 				if completeFilter != "" {
-					flag, err := strconv.ParseBool(completeFilter)
-					if err != nil {
-						ts.mtx.RUnlock()
-						return response, err
-					}
-					if flag && task.Completed {
-						response = append(response, task)
-					}
-					if !flag && !task.Completed {
+					if task.Completed == flag {
 						response = append(response, task)
 					}
 				} else {
@@ -181,7 +182,12 @@ func (ts *TaskStore) GetStats() models.Stats {
 
 		if task.CreatedTime.After(lastTime) {
 			stats.LastTask = task
+			lastTime = task.CreatedTime
 		}
+	}
+
+	if stats.Total != 0 {
+		stats.CompletedRate = float64(stats.Completed) / float64(stats.Total)
 	}
 
 	ts.mtx.RUnlock()
