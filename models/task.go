@@ -12,3 +12,9 @@ type NewTask struct {
 	Text      string `json:"text"`
 	Completed bool   `json:"completed"`
 }
+
+type PatchTask struct {
+	Title     *string `json:"title"`
+	Text      *string `json:"text"`
+	Completed *bool   `json:"completed"`
+}
