@@ -76,6 +76,7 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 			o, err := strconv.Atoi(offsetString)
 			if err != nil {
 				http.Error(w, "Invalid offset: must be integer", http.StatusBadRequest)
+				return
 			}
 			offset = o
 		}
@@ -85,6 +86,7 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 			l, err := strconv.Atoi(limitString)
 			if err != nil {
 				http.Error(w, "Invalid limit: must be integer", http.StatusBadRequest)
+				return
 			}
 			limit = l
 		}
