@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/Saik0-0/TaskManager/models"
 	"strconv"
 	"strings"
@@ -19,7 +20,11 @@ type Response struct {
 	Tasks []models.Task `json:"tasks"`
 }
 
-func (ts *TaskStore) AddTask(newTask models.NewTask) models.Task {
+func (ts *TaskStore) AddTask(newTask models.NewTask) (models.Task, error) {
+	if newTask.Title == "" {
+		return models.Task{}, fmt.Errorf("title can't be empty")
+	}
+
 	id := ts.NextID.Add(1)
 
 	task := models.Task{
@@ -33,7 +38,7 @@ func (ts *TaskStore) AddTask(newTask models.NewTask) models.Task {
 	ts.Tasks[int(id)] = task
 	ts.mtx.Unlock()
 
-	return task
+	return task, nil
 }
 
 func (ts *TaskStore) DeleteTask(id int) bool {

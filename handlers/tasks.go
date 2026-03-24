@@ -26,7 +26,11 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		responseTask := server.Store.AddTask(newTask)
+		responseTask, addErr := server.Store.AddTask(newTask)
+		if addErr != nil {
+			http.Error(w, "Invalid JSON: title can't be empty", http.StatusBadRequest)
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
