@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 type TaskStore struct {
@@ -27,6 +28,7 @@ func (ts *TaskStore) AddTask(newTask models.NewTask) (models.Task, error) {
 		Title:     newTask.Title,
 		Text:      newTask.Text,
 		Completed: newTask.Completed,
+		Time:      time.Now(),
 	}
 
 	ts.mtx.Lock()
@@ -71,6 +73,7 @@ func (ts *TaskStore) ChangeTask(id int, newTask models.NewTask) (models.Task, er
 		Title:     newTask.Title,
 		Text:      newTask.Text,
 		Completed: newTask.Completed,
+		Time:      time.Now(),
 	}
 
 	ts.Tasks[id] = task
@@ -102,6 +105,7 @@ func (ts *TaskStore) PartialChangeTask(id int, patchTask models.PatchTask) (mode
 	if patchTask.Completed != nil {
 		currentTask.Completed = *patchTask.Completed
 	}
+	currentTask.Time = time.Now()
 
 	ts.Tasks[id] = currentTask
 
