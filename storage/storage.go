@@ -3,7 +3,6 @@ package storage
 import (
 	"fmt"
 	"github.com/Saik0-0/TaskManager/models"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -25,11 +24,12 @@ func (ts *TaskStore) AddTask(newTask models.NewTask) (models.Task, error) {
 	id := ts.NextID.Add(1)
 
 	task := models.Task{
-		ID:        int(id),
-		Title:     newTask.Title,
-		Text:      newTask.Text,
-		Completed: newTask.Completed,
-		Time:      time.Now(),
+		ID:          int(id),
+		Title:       newTask.Title,
+		Text:        newTask.Text,
+		Completed:   newTask.Completed,
+		CreatedTime: time.Now(),
+		UpdatedTime: time.Now(),
 	}
 
 	ts.mtx.Lock()
@@ -58,7 +58,7 @@ func (ts *TaskStore) DeleteTask(id int) bool {
 func (ts *TaskStore) ChangeTask(id int, newTask models.NewTask) (models.Task, error) {
 	ts.mtx.Lock()
 
-	_, exist := ts.Tasks[id]
+	currTask, exist := ts.Tasks[id]
 	if !exist {
 		ts.mtx.Unlock()
 		return models.Task{}, fmt.Errorf("task not found")
@@ -70,11 +70,12 @@ func (ts *TaskStore) ChangeTask(id int, newTask models.NewTask) (models.Task, er
 	}
 
 	task := models.Task{
-		ID:        id,
-		Title:     newTask.Title,
-		Text:      newTask.Text,
-		Completed: newTask.Completed,
-		Time:      time.Now(),
+		ID:          id,
+		Title:       newTask.Title,
+		Text:        newTask.Text,
+		Completed:   newTask.Completed,
+		CreatedTime: currTask.CreatedTime,
+		UpdatedTime: time.Now(),
 	}
 
 	ts.Tasks[id] = task
@@ -106,7 +107,7 @@ func (ts *TaskStore) PartialChangeTask(id int, patchTask models.PatchTask) (mode
 	if patchTask.Completed != nil {
 		currentTask.Completed = *patchTask.Completed
 	}
-	currentTask.Time = time.Now()
+	currentTask.UpdatedTime = time.Now()
 
 	ts.Tasks[id] = currentTask
 
@@ -169,7 +170,7 @@ func (ts *TaskStore) GetStats() models.Stats {
 	ts.mtx.RLock()
 	for _, task := range ts.Tasks {
 		if flag {
-			lastTime = task.Time
+			lastTime = task.CreatedTime
 			flag = false
 		}
 		stats.Total++
@@ -178,36 +179,12 @@ func (ts *TaskStore) GetStats() models.Stats {
 			stats.Completed++
 		}
 
-		if task.Time.After(lastTime) {
+		if task.CreatedTime.After(lastTime) {
 			stats.LastTask = task
 		}
 	}
 
 	ts.mtx.RUnlock()
 
-	completedTasks, _ := ts.GetAllTasks("", "", "true")
-	stats.Completed = len(completedTasks)
-	if stats.Total > 0 {
-		stats.CompletedRate = float64(stats.Completed) / float64(stats.Total)
-	}
-
-	stats.LastTask = ts.getLastTask()
-
 	return stats
-}
-
-func (ts *TaskStore) getLastTask() models.Task {
-	ts.mtx.RLock()
-	tasks := make([]models.Task, 0, len(ts.Tasks))
-
-	for _, t := range ts.Tasks {
-		tasks = append(tasks, t)
-	}
-	ts.mtx.RUnlock()
-
-	sort.Slice(tasks, func(i, j int) bool {
-		return tasks[i].Time.Before(tasks[j].Time)
-	})
-
-	return tasks[len(tasks)-1]
 }

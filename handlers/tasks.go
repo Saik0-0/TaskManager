@@ -82,9 +82,9 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 			order := strings.HasPrefix(sortingType, "-")
 			sort.Slice(response.Tasks, func(i, j int) bool {
 				if !order {
-					return response.Tasks[i].Time.Before(response.Tasks[j].Time)
+					return response.Tasks[i].CreatedTime.Before(response.Tasks[j].CreatedTime)
 				}
-				return response.Tasks[i].Time.After(response.Tasks[j].Time)
+				return response.Tasks[i].CreatedTime.After(response.Tasks[j].CreatedTime)
 			})
 		}
 
