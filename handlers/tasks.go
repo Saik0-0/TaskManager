@@ -15,6 +15,11 @@ type Server struct {
 	Store *storage.TaskStore
 }
 
+type Response struct {
+	Total int           `json:"total"`
+	Tasks []models.Task `json:"tasks"`
+}
+
 func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
@@ -45,11 +50,14 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 		text := query.Get("text")
 		complete := query.Get("complete")
 
-		response, err := server.Store.GetAllTasks(title, text, complete)
+		var response Response
+		var err error
+		response.Tasks, err = server.Store.GetAllTasks(title, text, complete)
 		if err != nil {
 			http.Error(w, "Invalid Query params", http.StatusBadRequest)
 			return
 		}
+		response.Total = len(response.Tasks)
 
 		sortingType := query.Get("sort")
 		switch sortingType {

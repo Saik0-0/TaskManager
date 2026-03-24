@@ -15,11 +15,6 @@ type TaskStore struct {
 	mtx    sync.RWMutex
 }
 
-type Response struct {
-	Total int           `json:"total"`
-	Tasks []models.Task `json:"tasks"`
-}
-
 func (ts *TaskStore) AddTask(newTask models.NewTask) (models.Task, error) {
 	if newTask.Title == "" {
 		return models.Task{}, fmt.Errorf("title can't be empty")
@@ -85,13 +80,10 @@ func (ts *TaskStore) ChangeTask(id int, newTask models.NewTask) (models.Task, er
 	return task, nil
 }
 
-func (ts *TaskStore) GetAllTasks(titleFilter string, textFilter string, completeFilter string) (Response, error) {
+func (ts *TaskStore) GetAllTasks(titleFilter string, textFilter string, completeFilter string) ([]models.Task, error) {
 	ts.mtx.RLock()
 
-	response := Response{
-		Total: 0,
-		Tasks: make([]models.Task, 0, len(ts.Tasks)),
-	}
+	response := make([]models.Task, 0, len(ts.Tasks))
 
 	for _, task := range ts.Tasks {
 		if titleFilter == "" || strings.Contains(task.Title, titleFilter) {
@@ -102,16 +94,13 @@ func (ts *TaskStore) GetAllTasks(titleFilter string, textFilter string, complete
 						return response, err
 					}
 					if flag && task.Completed {
-						response.Tasks = append(response.Tasks, task)
-						response.Total++
+						response = append(response, task)
 					}
 					if !flag && !task.Completed {
-						response.Tasks = append(response.Tasks, task)
-						response.Total++
+						response = append(response, task)
 					}
 				} else {
-					response.Tasks = append(response.Tasks, task)
-					response.Total++
+					response = append(response, task)
 				}
 			}
 		}
