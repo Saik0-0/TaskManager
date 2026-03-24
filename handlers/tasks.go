@@ -111,6 +111,12 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 			limit = l
 		}
 
+		if offset < 0 {
+			offset = 0
+		}
+		if limit < 0 {
+			limit = response.Total
+		}
 		if offset > response.Total {
 			offset = response.Total
 		}
