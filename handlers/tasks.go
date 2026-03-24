@@ -117,8 +117,7 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		idString := strings.TrimPrefix(r.URL.Path, "/tasks/")
-		id, idErr := strconv.Atoi(idString)
+		id, idErr := parseID(r)
 		if idErr != nil {
 			http.Error(w, "Invalid id: must be integer", http.StatusBadRequest)
 			return
@@ -140,8 +139,7 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		defer r.Body.Close()
 
-		idString := strings.TrimPrefix(r.URL.Path, "/tasks/")
-		id, idErr := strconv.Atoi(idString)
+		id, idErr := parseID(r)
 		if idErr != nil {
 			http.Error(w, "Invalid id: must be integer", http.StatusBadRequest)
 			return
@@ -167,8 +165,7 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	case http.MethodDelete:
-		idString := strings.TrimPrefix(r.URL.Path, "/tasks/")
-		id, idErr := strconv.Atoi(idString)
+		id, idErr := parseID(r)
 		if idErr != nil {
 			http.Error(w, "Invalid id: must be integer", http.StatusBadRequest)
 			return
@@ -190,6 +187,14 @@ func fromBoolToInt(flag bool) int {
 	if flag {
 		return 1
 	}
-
 	return 0
+}
+
+func parseID(r *http.Request) (int, error) {
+	idString := strings.TrimPrefix(r.URL.Path, "/tasks/")
+	id, idErr := strconv.Atoi(idString)
+	if idErr != nil {
+		return -1, fmt.Errorf("id parsing error %w", idErr)
+	}
+	return id, nil
 }
