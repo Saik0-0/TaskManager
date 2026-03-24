@@ -155,8 +155,8 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		responseTask, exist := server.Store.ChangeTask(id, newTask)
-		if !exist {
+		responseTask, changingErr := server.Store.ChangeTask(id, newTask)
+		if changingErr != nil {
 			http.Error(w, "Task not found", http.StatusNotFound)
 			return
 		}

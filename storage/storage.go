@@ -57,13 +57,18 @@ func (ts *TaskStore) DeleteTask(id int) bool {
 	return true
 }
 
-func (ts *TaskStore) ChangeTask(id int, newTask models.NewTask) (models.Task, bool) {
+func (ts *TaskStore) ChangeTask(id int, newTask models.NewTask) (models.Task, error) {
 	ts.mtx.Lock()
 
 	_, exist := ts.Tasks[id]
 	if !exist {
 		ts.mtx.Unlock()
-		return models.Task{}, false
+		return models.Task{}, fmt.Errorf("task not found")
+	}
+
+	if newTask.Title == "" {
+		ts.mtx.Unlock()
+		return models.Task{}, fmt.Errorf("title can't be empty")
 	}
 
 	task := models.Task{
@@ -77,7 +82,7 @@ func (ts *TaskStore) ChangeTask(id int, newTask models.NewTask) (models.Task, bo
 
 	ts.mtx.Unlock()
 
-	return task, true
+	return task, nil
 }
 
 func (ts *TaskStore) GetAllTasks(titleFilter string, textFilter string, completeFilter string) (Response, error) {
