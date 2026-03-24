@@ -176,6 +176,34 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+	case http.MethodPatch:
+		defer r.Body.Close()
+
+		id, idErr := parseID(r)
+		if idErr != nil {
+			http.Error(w, "Invalid id: must be integer", http.StatusBadRequest)
+			return
+		}
+
+		var patchTask models.PatchTask
+		if err := json.NewDecoder(r.Body).Decode(&patchTask); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+
+		responseTask, changingErr := server.Store.PartialChangeTask(id, patchTask)
+		if changingErr != nil {
+			http.Error(w, "Task not found", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(responseTask); err != nil {
+			fmt.Println("Encoding error: ", err)
+			return
+		}
+
 	case http.MethodDelete:
 		id, idErr := parseID(r)
 		if idErr != nil {
