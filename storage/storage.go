@@ -80,6 +80,36 @@ func (ts *TaskStore) ChangeTask(id int, newTask models.NewTask) (models.Task, er
 	return task, nil
 }
 
+func (ts *TaskStore) PartialChangeTask(id int, patchTask models.PatchTask) (models.Task, error) {
+	ts.mtx.Lock()
+
+	currentTask, exist := ts.Tasks[id]
+	if !exist {
+		ts.mtx.Unlock()
+		return models.Task{}, fmt.Errorf("task not found")
+	}
+
+	if patchTask.Title != nil {
+		if *patchTask.Title == "" {
+			ts.mtx.Unlock()
+			return models.Task{}, fmt.Errorf("title can't be empty")
+		}
+		currentTask.Title = *patchTask.Title
+	}
+	if patchTask.Text != nil {
+		currentTask.Text = *patchTask.Text
+	}
+	if patchTask.Completed != nil {
+		currentTask.Completed = *patchTask.Completed
+	}
+
+	ts.Tasks[id] = currentTask
+
+	ts.mtx.Unlock()
+
+	return currentTask, nil
+}
+
 func (ts *TaskStore) GetAllTasks(titleFilter string, textFilter string, completeFilter string) ([]models.Task, error) {
 	ts.mtx.RLock()
 
