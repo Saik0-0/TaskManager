@@ -169,7 +169,9 @@ func (ts *TaskStore) GetStats() models.Stats {
 
 	completedTasks, _ := ts.GetAllTasks("", "", "true")
 	stats.Completed = len(completedTasks)
-	stats.CompletedRate = float64(stats.Completed*100) / float64(stats.Total)
+	if stats.Total > 0 {
+		stats.CompletedRate = float64(stats.Completed) / float64(stats.Total)
+	}
 
 	stats.LastTask = ts.getLastTask()
 
