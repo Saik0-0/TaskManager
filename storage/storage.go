@@ -162,9 +162,26 @@ func (ts *TaskStore) GetTask(id int) (models.Task, bool) {
 
 func (ts *TaskStore) GetStats() models.Stats {
 	var stats models.Stats
+	var lastTime time.Time
+	flag := true
 
 	ts.mtx.RLock()
-	stats.Total = len(ts.Tasks)
+	for _, task := range ts.Tasks {
+		if flag {
+			lastTime = task.Time
+			flag = false
+		}
+		stats.Total++
+
+		if task.Completed {
+			stats.Completed++
+		}
+
+		if task.Time.After(lastTime) {
+			stats.LastTask = task
+		}
+	}
+
 	ts.mtx.RUnlock()
 
 	completedTasks, _ := ts.GetAllTasks("", "", "true")
