@@ -126,6 +126,7 @@ func (ts *TaskStore) GetAllTasks(titleFilter string, textFilter string, complete
 				if completeFilter != "" {
 					flag, err := strconv.ParseBool(completeFilter)
 					if err != nil {
+						ts.mtx.RUnlock()
 						return response, err
 					}
 					if flag && task.Completed {
