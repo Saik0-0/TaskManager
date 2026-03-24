@@ -19,6 +19,7 @@ func main() {
 
 	http.HandleFunc("/tasks", server.TasksHandler)
 	http.HandleFunc("/tasks/", server.TaskHandler)
+	http.HandleFunc("/stats", server.StatsHandler)
 
 	if err := http.ListenAndServe(":9092", nil); err != nil {
 		fmt.Println("Listening error: ", err)

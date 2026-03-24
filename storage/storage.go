@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"github.com/Saik0-0/TaskManager/models"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -157,4 +158,36 @@ func (ts *TaskStore) GetTask(id int) (models.Task, bool) {
 	ts.mtx.RUnlock()
 
 	return responseTask, true
+}
+
+func (ts *TaskStore) GetStats() models.Stats {
+	var stats models.Stats
+
+	ts.mtx.RLock()
+	stats.Total = len(ts.Tasks)
+	ts.mtx.RUnlock()
+
+	completedTasks, _ := ts.GetAllTasks("", "", "true")
+	stats.Completed = len(completedTasks)
+	stats.CompletedRate = float64(stats.Completed*100) / float64(stats.Total)
+
+	stats.LastTask = ts.getLastTask()
+
+	return stats
+}
+
+func (ts *TaskStore) getLastTask() models.Task {
+	ts.mtx.RLock()
+	tasks := make([]models.Task, 0, len(ts.Tasks))
+
+	for _, t := range ts.Tasks {
+		tasks = append(tasks, t)
+	}
+	ts.mtx.RUnlock()
+
+	sort.Slice(tasks, func(i, j int) bool {
+		return tasks[i].Time.Before(tasks[j].Time)
+	})
+
+	return tasks[len(tasks)-1]
 }
