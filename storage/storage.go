@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/Saik0-0/TaskManager/models"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -74,24 +75,7 @@ func (ts *TaskStore) ChangeTask(id int, newTask models.NewTask) (models.Task, bo
 	return task, true
 }
 
-func (ts *TaskStore) GetAllTasks() Response {
-	ts.mtx.RLock()
-
-	response := Response{
-		Total: len(ts.Tasks),
-		Tasks: make([]models.Task, 0, len(ts.Tasks)),
-	}
-
-	for _, task := range ts.Tasks {
-		response.Tasks = append(response.Tasks, task)
-	}
-
-	ts.mtx.RUnlock()
-
-	return response
-}
-
-func (ts *TaskStore) GetAllTasksFiltered(filter string) Response {
+func (ts *TaskStore) GetAllTasks(titleFilter string, textFilter string, completeFilter string) (Response, error) {
 	ts.mtx.RLock()
 
 	response := Response{
@@ -100,15 +84,32 @@ func (ts *TaskStore) GetAllTasksFiltered(filter string) Response {
 	}
 
 	for _, task := range ts.Tasks {
-		if strings.Contains(task.Title, filter) {
-			response.Tasks = append(response.Tasks, task)
-			response.Total++
+		if titleFilter == "" || strings.Contains(task.Title, titleFilter) {
+			if textFilter == "" || strings.Contains(task.Text, textFilter) {
+				if completeFilter != "" {
+					flag, err := strconv.ParseBool(completeFilter)
+					if err != nil {
+						return response, err
+					}
+					if flag && task.Completed {
+						response.Tasks = append(response.Tasks, task)
+						response.Total++
+					}
+					if !flag && !task.Completed {
+						response.Tasks = append(response.Tasks, task)
+						response.Total++
+					}
+				} else {
+					response.Tasks = append(response.Tasks, task)
+					response.Total++
+				}
+			}
 		}
 	}
 
 	ts.mtx.RUnlock()
 
-	return response
+	return response, nil
 }
 
 func (ts *TaskStore) GetTask(id int) (models.Task, bool) {
@@ -123,28 +124,4 @@ func (ts *TaskStore) GetTask(id int) (models.Task, bool) {
 	ts.mtx.RUnlock()
 
 	return responseTask, true
-}
-
-func (ts *TaskStore) GetDoneTasks(filter bool) Response {
-	ts.mtx.RLock()
-
-	response := Response{
-		Total: 0,
-		Tasks: make([]models.Task, 0, len(ts.Tasks)),
-	}
-
-	for _, task := range ts.Tasks {
-		if filter && task.Completed {
-			response.Tasks = append(response.Tasks, task)
-			response.Total++
-		}
-		if !filter && !task.Completed {
-			response.Tasks = append(response.Tasks, task)
-			response.Total++
-		}
-	}
-
-	ts.mtx.RUnlock()
-
-	return response
 }

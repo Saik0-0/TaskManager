@@ -37,22 +37,14 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodGet:
 		query := r.URL.Query()
-		filter := query.Get("filter")
-		response := storage.Response{}
-		if filter != "" {
-			response = server.Store.GetAllTasksFiltered(filter)
-		} else {
-			response = server.Store.GetAllTasks()
-		}
+		title := query.Get("title")
+		text := query.Get("text")
+		complete := query.Get("complete")
 
-		doneFilterString := query.Get("done")
-		if doneFilterString != "" {
-			d, err := strconv.ParseBool(doneFilterString)
-			if err != nil {
-				http.Error(w, "Invalid done filter", http.StatusBadRequest)
-				return
-			}
-			response = server.Store.GetDoneTasks(d)
+		response, err := server.Store.GetAllTasks(title, text, complete)
+		if err != nil {
+			http.Error(w, "Invalid Query params", http.StatusBadRequest)
+			return
 		}
 
 		sortingType := query.Get("sort")
