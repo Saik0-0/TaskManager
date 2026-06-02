@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/Saik0-0/TaskManager/feature_postgresql"
 	"github.com/Saik0-0/TaskManager/handlers"
 	"github.com/Saik0-0/TaskManager/models"
 	"github.com/Saik0-0/TaskManager/storage"
@@ -9,6 +10,7 @@ import (
 )
 
 func main() {
+	feature_postgresql.CheckConnection()
 	taskStore := storage.TaskStore{
 		Tasks: make(map[int]models.Task),
 	}
