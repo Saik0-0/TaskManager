@@ -3,7 +3,7 @@ package feature_postgresql
 import (
 	"context"
 	"fmt"
-	"github.com/Saik0-0/TaskManager/transport/dto"
+	"github.com/Saik0-0/TaskManager/iternal/core/transport/dto"
 	"github.com/jackc/pgx/v5"
 	"time"
 )

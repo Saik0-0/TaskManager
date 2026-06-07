@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/Saik0-0/TaskManager/repository/feature_postgresql"
-	"github.com/Saik0-0/TaskManager/service/storage"
-	"github.com/Saik0-0/TaskManager/transport/dto"
-	"github.com/Saik0-0/TaskManager/transport/handlers"
+	"github.com/Saik0-0/TaskManager/iternal/core/repository/feature_postgresql"
+	"github.com/Saik0-0/TaskManager/iternal/core/service/storage"
+	"github.com/Saik0-0/TaskManager/iternal/core/transport/dto"
+	"github.com/Saik0-0/TaskManager/iternal/core/transport/handlers"
 	"net/http"
 )
 
