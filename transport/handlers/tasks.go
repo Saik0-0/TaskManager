@@ -3,8 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Saik0-0/TaskManager/models"
-	"github.com/Saik0-0/TaskManager/storage"
+	"github.com/Saik0-0/TaskManager/service/storage"
+	"github.com/Saik0-0/TaskManager/transport/dto"
 	"net/http"
 	"sort"
 	"strconv"
@@ -16,8 +16,8 @@ type Server struct {
 }
 
 type Response struct {
-	Total int           `json:"total"`
-	Tasks []models.Task `json:"tasks"`
+	Total int        `json:"total"`
+	Tasks []dto.Task `json:"tasks"`
 }
 
 type ErrorResponse struct {
@@ -29,11 +29,13 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		defer r.Body.Close()
 
-		var newTask models.NewTask
+		var newTask dto.NewTask
 		if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
 			writeError(w, http.StatusBadRequest, "Invalid json")
 			return
 		}
+
+		// TODO: add here function with sql query to create task
 
 		responseTask, addErr := server.Store.AddTask(newTask)
 		if addErr != nil {
@@ -161,7 +163,7 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var newTask models.NewTask
+		var newTask dto.NewTask
 		if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
 			writeError(w, http.StatusBadRequest, "Invalid JSON")
 			return
@@ -184,7 +186,7 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var patchTask models.PatchTask
+		var patchTask dto.PatchTask
 		if err := json.NewDecoder(r.Body).Decode(&patchTask); err != nil {
 			writeError(w, http.StatusBadRequest, "Invalid JSON")
 			return

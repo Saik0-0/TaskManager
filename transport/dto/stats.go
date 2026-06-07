@@ -1,4 +1,4 @@
-package models
+package dto
 
 type Stats struct {
 	Total         int     `json:"total"`

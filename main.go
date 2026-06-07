@@ -1,18 +1,24 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/Saik0-0/TaskManager/feature_postgresql"
-	"github.com/Saik0-0/TaskManager/handlers"
-	"github.com/Saik0-0/TaskManager/models"
-	"github.com/Saik0-0/TaskManager/storage"
+	"github.com/Saik0-0/TaskManager/repository/feature_postgresql"
+	"github.com/Saik0-0/TaskManager/service/storage"
+	"github.com/Saik0-0/TaskManager/transport/dto"
+	"github.com/Saik0-0/TaskManager/transport/handlers"
 	"net/http"
 )
 
 func main() {
-	feature_postgresql.CheckConnection()
+	ctx := context.Background()
+	_, err := feature_postgresql.CreateConnection(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	taskStore := storage.TaskStore{
-		Tasks: make(map[int]models.Task),
+		Tasks: make(map[int]dto.Task),
 	}
 
 	server := handlers.Server{
