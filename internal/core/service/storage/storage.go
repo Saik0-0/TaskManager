@@ -2,7 +2,7 @@ package storage
 
 import (
 	"fmt"
-	dto2 "github.com/Saik0-0/TaskManager/iternal/core/transport/dto"
+	dto2 "github.com/Saik0-0/TaskManager/internal/core/transport/dto"
 	"strconv"
 	"strings"
 	"sync"

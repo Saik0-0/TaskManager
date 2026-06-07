@@ -3,8 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Saik0-0/TaskManager/iternal/core/service/storage"
-	"github.com/Saik0-0/TaskManager/iternal/core/transport/dto"
+	"github.com/Saik0-0/TaskManager/internal/core/service/storage"
+	"github.com/Saik0-0/TaskManager/internal/core/transport/dto"
 	"net/http"
 	"sort"
 	"strconv"
