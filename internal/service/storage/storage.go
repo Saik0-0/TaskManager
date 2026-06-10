@@ -2,7 +2,7 @@ package storage
 
 import (
 	"fmt"
-	dto2 "github.com/Saik0-0/TaskManager/internal/core/transport/dto"
+	"github.com/Saik0-0/TaskManager/internal/transport/dto"
 	"strconv"
 	"strings"
 	"sync"
@@ -11,19 +11,19 @@ import (
 )
 
 type TaskStore struct {
-	Tasks  map[int]dto2.Task
+	Tasks  map[int]dto.Task
 	NextID atomic.Int64
 	mtx    sync.RWMutex
 }
 
-func (ts *TaskStore) AddTask(newTask dto2.NewTask) (dto2.Task, error) {
+func (ts *TaskStore) AddTask(newTask dto.NewTask) (dto.Task, error) {
 	if newTask.Title == "" {
-		return dto2.Task{}, fmt.Errorf("title can't be empty")
+		return dto.Task{}, fmt.Errorf("title can't be empty")
 	}
 
 	id := ts.NextID.Add(1)
 
-	task := dto2.Task{
+	task := dto.Task{
 		ID:          int(id),
 		Title:       newTask.Title,
 		Text:        newTask.Text,
@@ -54,21 +54,21 @@ func (ts *TaskStore) DeleteTask(id int) bool {
 	return true
 }
 
-func (ts *TaskStore) ChangeTask(id int, newTask dto2.NewTask) (dto2.Task, error) {
+func (ts *TaskStore) ChangeTask(id int, newTask dto.NewTask) (dto.Task, error) {
 	ts.mtx.Lock()
 
 	currTask, exist := ts.Tasks[id]
 	if !exist {
 		ts.mtx.Unlock()
-		return dto2.Task{}, fmt.Errorf("task not found")
+		return dto.Task{}, fmt.Errorf("task not found")
 	}
 
 	if newTask.Title == "" {
 		ts.mtx.Unlock()
-		return dto2.Task{}, fmt.Errorf("title can't be empty")
+		return dto.Task{}, fmt.Errorf("title can't be empty")
 	}
 
-	task := dto2.Task{
+	task := dto.Task{
 		ID:          id,
 		Title:       newTask.Title,
 		Text:        newTask.Text,
@@ -84,19 +84,19 @@ func (ts *TaskStore) ChangeTask(id int, newTask dto2.NewTask) (dto2.Task, error)
 	return task, nil
 }
 
-func (ts *TaskStore) PartialChangeTask(id int, patchTask dto2.PatchTask) (dto2.Task, error) {
+func (ts *TaskStore) PartialChangeTask(id int, patchTask dto.PatchTask) (dto.Task, error) {
 	ts.mtx.Lock()
 
 	currentTask, exist := ts.Tasks[id]
 	if !exist {
 		ts.mtx.Unlock()
-		return dto2.Task{}, fmt.Errorf("task not found")
+		return dto.Task{}, fmt.Errorf("task not found")
 	}
 
 	if patchTask.Title != nil {
 		if *patchTask.Title == "" {
 			ts.mtx.Unlock()
-			return dto2.Task{}, fmt.Errorf("title can't be empty")
+			return dto.Task{}, fmt.Errorf("title can't be empty")
 		}
 		currentTask.Title = *patchTask.Title
 	}
@@ -115,10 +115,10 @@ func (ts *TaskStore) PartialChangeTask(id int, patchTask dto2.PatchTask) (dto2.T
 	return currentTask, nil
 }
 
-func (ts *TaskStore) GetAllTasks(titleFilter string, textFilter string, completeFilter string) ([]dto2.Task, error) {
+func (ts *TaskStore) GetAllTasks(titleFilter string, textFilter string, completeFilter string) ([]dto.Task, error) {
 	ts.mtx.RLock()
 
-	response := make([]dto2.Task, 0, len(ts.Tasks))
+	response := make([]dto.Task, 0, len(ts.Tasks))
 
 	flag := true
 	var err error
@@ -149,13 +149,13 @@ func (ts *TaskStore) GetAllTasks(titleFilter string, textFilter string, complete
 	return response, nil
 }
 
-func (ts *TaskStore) GetTask(id int) (dto2.Task, bool) {
+func (ts *TaskStore) GetTask(id int) (dto.Task, bool) {
 	ts.mtx.RLock()
 
 	responseTask, exist := ts.Tasks[id]
 	if !exist {
 		ts.mtx.RUnlock()
-		return dto2.Task{}, false
+		return dto.Task{}, false
 	}
 
 	ts.mtx.RUnlock()
@@ -163,8 +163,8 @@ func (ts *TaskStore) GetTask(id int) (dto2.Task, bool) {
 	return responseTask, true
 }
 
-func (ts *TaskStore) GetStats() dto2.Stats {
-	var stats dto2.Stats
+func (ts *TaskStore) GetStats() dto.Stats {
+	var stats dto.Stats
 	var lastTime time.Time
 	flag := true
 

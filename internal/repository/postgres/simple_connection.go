@@ -1,4 +1,4 @@
-package feature_postgresql
+package postgres
 
 import (
 	"context"

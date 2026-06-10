@@ -3,16 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/Saik0-0/TaskManager/internal/core/repository/feature_postgresql"
-	"github.com/Saik0-0/TaskManager/internal/core/service/storage"
-	"github.com/Saik0-0/TaskManager/internal/core/transport/dto"
-	"github.com/Saik0-0/TaskManager/internal/core/transport/handlers"
+	"github.com/Saik0-0/TaskManager/internal/repository/postgres"
+	"github.com/Saik0-0/TaskManager/internal/service/storage"
+	"github.com/Saik0-0/TaskManager/internal/transport/dto"
+	"github.com/Saik0-0/TaskManager/internal/transport/handlers"
 	"net/http"
 )
 
 func main() {
 	ctx := context.Background()
-	_, err := feature_postgresql.CreateConnection(ctx)
+	_, err := postgres.CreateConnection(ctx)
 	if err != nil {
 		panic(err)
 	}
