@@ -2,7 +2,7 @@ package dto
 
 import "time"
 
-type Task struct {
+type TaskDTO struct {
 	ID          int       `json:"id"`
 	Title       string    `json:"title"`
 	Text        string    `json:"text"`
@@ -11,13 +11,13 @@ type Task struct {
 	UpdatedTime time.Time `json:"updated_time"`
 }
 
-type NewTask struct {
+type NewTaskDTO struct {
 	Title     string `json:"title"`
 	Text      string `json:"text"`
 	Completed bool   `json:"completed"`
 }
 
-type PatchTask struct {
+type PatchTaskDTO struct {
 	Title     *string `json:"title"`
 	Text      *string `json:"text"`
 	Completed *bool   `json:"completed"`

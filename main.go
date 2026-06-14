@@ -4,26 +4,32 @@ import (
 	"context"
 	"fmt"
 	"github.com/Saik0-0/TaskManager/internal/repository/postgres"
-	"github.com/Saik0-0/TaskManager/internal/service/storage"
-	"github.com/Saik0-0/TaskManager/internal/transport/dto"
+	"github.com/Saik0-0/TaskManager/internal/service"
 	"github.com/Saik0-0/TaskManager/internal/transport/handlers"
+	"github.com/joho/godotenv"
 	"net/http"
 )
 
 func main() {
+	_ = godotenv.Load()
 	ctx := context.Background()
-	_, err := postgres.CreateConnection(ctx)
+
+	conf, err := postgres.NewConfig()
 	if err != nil {
 		panic(err)
 	}
 
-	taskStore := storage.TaskStore{
-		Tasks: make(map[int]dto.Task),
+	pool, err := postgres.NewConnectionPool(ctx, conf)
+	if err != nil {
+		panic(err)
 	}
 
-	server := handlers.Server{
-		Store: &taskStore,
-	}
+	fmt.Println("Successful connection")
+
+	repo := postgres.NewRepository(pool)
+	taskService := service.NewTaskService(repo)
+
+	server := handlers.NewServer(taskService)
 
 	http.HandleFunc("/tasks", server.TasksHandler)
 	http.HandleFunc("/tasks/", server.TaskHandler)

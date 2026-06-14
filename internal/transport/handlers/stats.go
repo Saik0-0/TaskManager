@@ -6,9 +6,9 @@ import (
 
 func (server *Server) StatsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case http.MethodGet:
-		response := server.Store.GetStats()
-		writeJSON(w, http.StatusOK, response)
+	//case http.MethodGet:
+	//	response := server.Store.GetStats()
+	//	writeJSON(w, http.StatusOK, response)
 
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "Invalid method")

@@ -3,21 +3,25 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Saik0-0/TaskManager/internal/service/storage"
+	"github.com/Saik0-0/TaskManager/internal/service"
 	"github.com/Saik0-0/TaskManager/internal/transport/dto"
 	"net/http"
-	"sort"
+	//"sort"
 	"strconv"
 	"strings"
 )
 
 type Server struct {
-	Store *storage.TaskStore
+	service *service.TaskService
+}
+
+func NewServer(service *service.TaskService) *Server {
+	return &Server{service: service}
 }
 
 type Response struct {
-	Total int        `json:"total"`
-	Tasks []dto.Task `json:"tasks"`
+	Total int           `json:"total"`
+	Tasks []dto.TaskDTO `json:"tasks"`
 }
 
 type ErrorResponse struct {
@@ -25,111 +29,110 @@ type ErrorResponse struct {
 }
 
 func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	switch r.Method {
 	case http.MethodPost:
 		defer r.Body.Close()
 
-		var newTask dto.NewTask
+		var newTask dto.NewTaskDTO
 		if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
 			writeError(w, http.StatusBadRequest, "Invalid json")
 			return
 		}
 
-		// TODO: add here function with sql query to create task
-
-		responseTask, addErr := server.Store.AddTask(newTask)
+		responseTask, addErr := server.service.AddTask(ctx, newTask)
 		if addErr != nil {
-			writeError(w, http.StatusBadRequest, "Invalid JSON: title can't be empty")
+			writeError(w, http.StatusBadRequest, "Error in creating new task")
 			return
 		}
 
 		writeJSON(w, http.StatusCreated, responseTask)
 
-	case http.MethodGet:
-		query := r.URL.Query()
-		title := query.Get("title")
-		text := query.Get("text")
-		complete := query.Get("complete")
-
-		var response Response
-		var err error
-		response.Tasks, err = server.Store.GetAllTasks(title, text, complete)
-		if err != nil {
-			writeError(w, http.StatusBadRequest, "Invalid Query params")
-			return
-		}
-		response.Total = len(response.Tasks)
-
-		sortingType := query.Get("sort")
-		switch sortingType {
-		case "title", "-title":
-			order := strings.HasPrefix(sortingType, "-")
-			sort.Slice(response.Tasks, func(i, j int) bool {
-				if !order {
-					return response.Tasks[i].Title < response.Tasks[j].Title
-				}
-				return response.Tasks[i].Title > response.Tasks[j].Title
-			})
-
-		case "completed", "-completed":
-			order := strings.HasPrefix(sortingType, "-")
-			sort.Slice(response.Tasks, func(i, j int) bool {
-				if !order {
-					return fromBoolToInt(response.Tasks[i].Completed) > fromBoolToInt(response.Tasks[j].Completed)
-				}
-				return fromBoolToInt(response.Tasks[i].Completed) < fromBoolToInt(response.Tasks[j].Completed)
-			})
-
-		case "time", "-time":
-			order := strings.HasPrefix(sortingType, "-")
-			sort.Slice(response.Tasks, func(i, j int) bool {
-				if !order {
-					return response.Tasks[i].CreatedTime.Before(response.Tasks[j].CreatedTime)
-				}
-				return response.Tasks[i].CreatedTime.After(response.Tasks[j].CreatedTime)
-			})
-		}
-
-		offset := 0
-		limit := response.Total
-
-		offsetString := query.Get("offset")
-		if offsetString != "" {
-			o, err := strconv.Atoi(offsetString)
-			if err != nil {
-				writeError(w, http.StatusBadRequest, "Invalid offset: must be integer")
-				return
-			}
-			offset = o
-		}
-
-		limitString := query.Get("limit")
-		if limitString != "" {
-			l, err := strconv.Atoi(limitString)
-			if err != nil {
-				writeError(w, http.StatusBadRequest, "Invalid limit: must be integer")
-				return
-			}
-			limit = l
-		}
-
-		if offset < 0 {
-			offset = 0
-		}
-		if limit < 0 {
-			limit = response.Total
-		}
-		if offset > response.Total {
-			offset = response.Total
-		}
-		end := offset + limit
-		if end > response.Total {
-			end = response.Total
-		}
-
-		response.Tasks = response.Tasks[offset:end]
-
-		writeJSON(w, http.StatusOK, response)
+	//case http.MethodGet:
+	//	query := r.URL.Query()
+	//	title := query.Get("title")
+	//	text := query.Get("text")
+	//	complete := query.Get("complete")
+	//
+	//	var response Response
+	//	var err error
+	//	response.Tasks, err = server.Store.GetAllTasks(title, text, complete)
+	//	if err != nil {
+	//		writeError(w, http.StatusBadRequest, "Invalid Query params")
+	//		return
+	//	}
+	//	response.Total = len(response.Tasks)
+	//
+	//	sortingType := query.Get("sort")
+	//	switch sortingType {
+	//	case "title", "-title":
+	//		order := strings.HasPrefix(sortingType, "-")
+	//		sort.Slice(response.Tasks, func(i, j int) bool {
+	//			if !order {
+	//				return response.Tasks[i].Title < response.Tasks[j].Title
+	//			}
+	//			return response.Tasks[i].Title > response.Tasks[j].Title
+	//		})
+	//
+	//	case "completed", "-completed":
+	//		order := strings.HasPrefix(sortingType, "-")
+	//		sort.Slice(response.Tasks, func(i, j int) bool {
+	//			if !order {
+	//				return fromBoolToInt(response.Tasks[i].Completed) > fromBoolToInt(response.Tasks[j].Completed)
+	//			}
+	//			return fromBoolToInt(response.Tasks[i].Completed) < fromBoolToInt(response.Tasks[j].Completed)
+	//		})
+	//
+	//	case "time", "-time":
+	//		order := strings.HasPrefix(sortingType, "-")
+	//		sort.Slice(response.Tasks, func(i, j int) bool {
+	//			if !order {
+	//				return response.Tasks[i].CreatedTime.Before(response.Tasks[j].CreatedTime)
+	//			}
+	//			return response.Tasks[i].CreatedTime.After(response.Tasks[j].CreatedTime)
+	//		})
+	//	}
+	//
+	//	offset := 0
+	//	limit := response.Total
+	//
+	//	offsetString := query.Get("offset")
+	//	if offsetString != "" {
+	//		o, err := strconv.Atoi(offsetString)
+	//		if err != nil {
+	//			writeError(w, http.StatusBadRequest, "Invalid offset: must be integer")
+	//			return
+	//		}
+	//		offset = o
+	//	}
+	//
+	//	limitString := query.Get("limit")
+	//	if limitString != "" {
+	//		l, err := strconv.Atoi(limitString)
+	//		if err != nil {
+	//			writeError(w, http.StatusBadRequest, "Invalid limit: must be integer")
+	//			return
+	//		}
+	//		limit = l
+	//	}
+	//
+	//	if offset < 0 {
+	//		offset = 0
+	//	}
+	//	if limit < 0 {
+	//		limit = response.Total
+	//	}
+	//	if offset > response.Total {
+	//		offset = response.Total
+	//	}
+	//	end := offset + limit
+	//	if end > response.Total {
+	//		end = response.Total
+	//	}
+	//
+	//	response.Tasks = response.Tasks[offset:end]
+	//
+	//	writeJSON(w, http.StatusOK, response)
 
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "Invalid method")
@@ -138,6 +141,7 @@ func (server *Server) TasksHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	switch r.Method {
 	case http.MethodGet:
 		id, idErr := parseID(r)
@@ -146,60 +150,60 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		responseTask, exist := server.Store.GetTask(id)
-		if !exist {
+		responseTask, err := server.service.GetTask(ctx, id)
+		if err != nil {
 			writeError(w, http.StatusNotFound, "Task not found")
 			return
 		}
 
 		writeJSON(w, http.StatusOK, responseTask)
-
-	case http.MethodPut:
-		defer r.Body.Close()
-
-		id, idErr := parseID(r)
-		if idErr != nil {
-			writeError(w, http.StatusBadRequest, "Invalid id: must be integer")
-			return
-		}
-
-		var newTask dto.NewTask
-		if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
-			writeError(w, http.StatusBadRequest, "Invalid JSON")
-			return
-		}
-
-		responseTask, changingErr := server.Store.ChangeTask(id, newTask)
-		if changingErr != nil {
-			writeError(w, http.StatusNotFound, "Task not found")
-			return
-		}
-
-		writeJSON(w, http.StatusOK, responseTask)
-
-	case http.MethodPatch:
-		defer r.Body.Close()
-
-		id, idErr := parseID(r)
-		if idErr != nil {
-			writeError(w, http.StatusBadRequest, "Invalid id: must be integer")
-			return
-		}
-
-		var patchTask dto.PatchTask
-		if err := json.NewDecoder(r.Body).Decode(&patchTask); err != nil {
-			writeError(w, http.StatusBadRequest, "Invalid JSON")
-			return
-		}
-
-		responseTask, changingErr := server.Store.PartialChangeTask(id, patchTask)
-		if changingErr != nil {
-			writeError(w, http.StatusNotFound, "Task not found")
-			return
-		}
-
-		writeJSON(w, http.StatusOK, responseTask)
-
+	//
+	//case http.MethodPut:
+	//	defer r.Body.Close()
+	//
+	//	id, idErr := parseID(r)
+	//	if idErr != nil {
+	//		writeError(w, http.StatusBadRequest, "Invalid id: must be integer")
+	//		return
+	//	}
+	//
+	//	var newTask dto.NewTaskDTO
+	//	if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
+	//		writeError(w, http.StatusBadRequest, "Invalid JSON")
+	//		return
+	//	}
+	//
+	//	responseTask, changingErr := server.Store.ChangeTask(id, newTask)
+	//	if changingErr != nil {
+	//		writeError(w, http.StatusNotFound, "TaskDTO not found")
+	//		return
+	//	}
+	//
+	//	writeJSON(w, http.StatusOK, responseTask)
+	//
+	//case http.MethodPatch:
+	//	defer r.Body.Close()
+	//
+	//	id, idErr := parseID(r)
+	//	if idErr != nil {
+	//		writeError(w, http.StatusBadRequest, "Invalid id: must be integer")
+	//		return
+	//	}
+	//
+	//	var patchTask dto.PatchTaskDTO
+	//	if err := json.NewDecoder(r.Body).Decode(&patchTask); err != nil {
+	//		writeError(w, http.StatusBadRequest, "Invalid JSON")
+	//		return
+	//	}
+	//
+	//	responseTask, changingErr := server.Store.PartialChangeTask(id, patchTask)
+	//	if changingErr != nil {
+	//		writeError(w, http.StatusNotFound, "TaskDTO not found")
+	//		return
+	//	}
+	//
+	//	writeJSON(w, http.StatusOK, responseTask)
+	//
 	case http.MethodDelete:
 		id, idErr := parseID(r)
 		if idErr != nil {
@@ -207,7 +211,7 @@ func (server *Server) TaskHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if try := server.Store.DeleteTask(id); !try {
+		if err := server.service.DeleteTask(ctx, id); err != nil {
 			writeError(w, http.StatusNotFound, "Task not found")
 			return
 		}
